@@ -51,13 +51,16 @@ go-workspace is a Go package to simplify the access to the Cache, Config, Home, 
 The project uses the following core software components:
 * [Testify][testify_url] - Go unit-testing toolkit with common assertions and mocks.
 
+
 ## Prerequisites
 go-workspace requires Go version 1.16 or later to be installed on your system.
+
 
 ## Installation
 ```console
 go get -u go.markdumay.org/workspace
 ```
+
 
 ## Usage
 Import go-workspace into your application to start using the package. The following code snippet illustrates the basic usage of go-workspace. Please refer to the [package documentation][package] for more details.
@@ -164,6 +167,7 @@ Unfold one of the below operating systems to see the mapping of the folders to t
 | Temp      | `%TMP%`, `%TEMP%`, `%USERPROFILE%`, or the Windows directory                                      |
 </details>
 
+
 ## Contributing
 go-workspace welcomes contributions of any kind. It is recommended to create an issue to discuss your intended contribution before submitting a larger pull request though. Please consider the following guidelines when contributing:
 - Address all linting recommendations from `golangci-lint run` (using `.golangci.yml` from the repository).
@@ -178,8 +182,10 @@ The following steps decribe how to submit a Pull Request:
 2. Make and test the changes
 3. Submit a Pull Request with a comprehensive description of the changes
 
+
 ## Donate
 <a href="https://www.buymeacoffee.com/markdumay" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;"></a>
+
 
 ## License
 The go-workspace codebase is released under the [MIT license][license]. The documentation (including the "README") is licensed under the Creative Commons ([CC BY-NC 4.0)][cc-by-nc-4.0] license.
