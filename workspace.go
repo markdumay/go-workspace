@@ -8,48 +8,12 @@ package workspace
 //======================================================================================================================
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
-)
-
-//======================================================================================================================
-// endregion
-//======================================================================================================================
-
-//======================================================================================================================
-// region Public Constants
-//======================================================================================================================
-
-// Defines a pseudo enumeration of possible application directories.
-const (
-	// Cache is the OS's user-specific cache directory. On Unix, this is either '$XDG_CACHE_HOME' or '$HOME/.cache'. On
-	// macOS, this is '$HOME/Library/Caches'. On Plan 9, the cache directory is '$home/lib/cache'. And lastly, on
-	// Windows the cache directory is derived from '%LocalAppData%'.
-	Cache DirType = iota + 1
-
-	// Config is the directory containing the main application configuration file, if any. It is derived from
-	// viper.ConfigFileUsed().
-	Config
-
-	// Home is the default, fully expanded user home directory.
-	Home
-
-	// Workspace is working directory of the repository or the running command. It is typically initialized by
-	// WorkspaceRoot().
-	Workspace
-
-	// Temp is the OS-specific temp directory used by ShellDoc. The path is set to either '$TMPDIR' (on Unix or macOS)
-	// or '/tmp' (on Unix, macOS or Plan 9). On Windows, the directory can be either '%TMP%', '%TEMP%',
-	// '%USERPROFILE%', or the Windows directory.
-	//
-	// The path is not guaranteed to exist. Use RecreateTempDir() to recreate the directory prior to accessing it, and
-	// use RemoveTempDir() once done.
-	Temp
 )
 
 //======================================================================================================================
@@ -89,16 +53,6 @@ type AppDirs struct {
 	keywordsReverse map[string]string
 }
 
-// Dir holds a reference to a specific application directory and it's aliases (keywords).
-type Dir struct {
-	DirType DirType
-	Path    string
-	Aliases []string
-}
-
-// DirType defines the type of directory to be configured.
-type DirType int
-
 //======================================================================================================================
 // endregion
 //======================================================================================================================
@@ -135,7 +89,7 @@ func (a *AppDirs) initKeywords() {
 	}
 
 	for _, d := range dirs {
-		for i, alias := range d.Aliases {
+		for i, alias := range d.Aliases() {
 			a.keywords[alias] = d.Path
 			if i == 0 {
 				a.keywordsReverse[d.Path] = alias
@@ -195,45 +149,6 @@ func NewAppDirs(appName string) (dirs *AppDirs, err error) {
 	return &d, nil
 }
 
-// NewDir creates a new Dir instance for the provided arguments. A default path is set when the provided path is empty.
-// The input path should be an absolute path otherwise.
-func NewDir(dirType DirType, path string, aliases []string, appName string) (dir *Dir, err error) {
-	var d Dir
-
-	d.DirType = dirType
-	d.Aliases = aliases
-
-	if path != "" {
-		if !filepath.IsAbs(path) {
-			return nil, fmt.Errorf("cannot process relative path: %s", path)
-		}
-		d.Path = path
-	} else {
-		switch dirType {
-		case Cache:
-			d.Path, err = os.UserCacheDir()
-			d.Path = filepath.Join(d.Path, appName)
-
-		case Config, Workspace:
-			d.Path, err = Root(appName)
-
-		case Home:
-			d.Path, err = os.UserHomeDir()
-
-		case Temp:
-			d.Path = filepath.Join(os.TempDir(), appName)
-		}
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("cannot initialize directory: %s", dirType.String())
-	}
-
-	d.Path = filepath.Clean(d.Path)
-
-	return &d, err
-}
-
 // Assign initializes a new application-specific directory and updates the internal keyword map to enable
 // parameterization of paths. Default aliases are added when no aliases are provided. The full keyword map is updated
 // when an existing entry is updated, otherwise the new keywords are appended. Assign does not check for potential
@@ -243,36 +158,36 @@ func (a *AppDirs) Assign(d Dir) {
 	switch d.DirType {
 	case Cache:
 		updated = a.cache != nil
-		if len(d.Aliases) == 0 {
-			d.Aliases = defaultCache
+		if len(d.Aliases()) == 0 {
+			d.AppendAliases(defaultCache...)
 		}
 		a.cache = &d
 
 	case Config:
 		updated = a.config != nil
-		if len(d.Aliases) == 0 {
-			d.Aliases = defaultConfig
+		if len(d.Aliases()) == 0 {
+			d.AppendAliases(defaultConfig...)
 		}
 		a.config = &d
 
 	case Home:
 		updated = a.home != nil
-		if len(d.Aliases) == 0 {
-			d.Aliases = defaultHome
+		if len(d.Aliases()) == 0 {
+			d.AppendAliases(defaultHome...)
 		}
 		a.home = &d
 
 	case Temp:
 		updated = a.temp != nil
-		if len(d.Aliases) == 0 {
-			d.Aliases = defaultTemp
+		if len(d.Aliases()) == 0 {
+			d.AppendAliases(defaultTemp...)
 		}
 		a.temp = &d
 
 	case Workspace:
 		updated = a.workspace != nil
-		if len(d.Aliases) == 0 {
-			d.Aliases = defaultWorkspace
+		if len(d.Aliases()) == 0 {
+			d.AppendAliases(defaultWorkspace...)
 		}
 		a.workspace = &d
 	}
@@ -289,7 +204,7 @@ func (a *AppDirs) Assign(d Dir) {
 			a.keywordsReverse = make(map[string]string)
 		}
 
-		for i, alias := range d.Aliases {
+		for i, alias := range d.Aliases() {
 			a.keywords[alias] = d.Path
 			if i == 0 {
 				a.keywordsReverse[d.Path] = alias // use the first alias for a reverse substitution
@@ -348,24 +263,6 @@ func (a *AppDirs) CreateTemp() (err error) {
 func (a *AppDirs) Home() string {
 	if a.home != nil {
 		return a.home.Path
-	}
-	return ""
-}
-
-// Temp retrieves the current temp directory. It returns an empty string if the directory is not set. Use Assign() to
-// initialize a new Temp directory.
-func (a *AppDirs) Temp() string {
-	if a.temp != nil {
-		return a.temp.Path
-	}
-	return ""
-}
-
-// Workspace retrieves the current workspace directory. It returns an empty string if the
-// directory is not set. Use Assign() to initialize a new Workspace directory.
-func (a *AppDirs) Workspace() string {
-	if a.workspace != nil {
-		return a.workspace.Path
 	}
 	return ""
 }
@@ -488,70 +385,22 @@ func (a *AppDirs) RemoveTemp(subdir string) (err error) {
 	return err
 }
 
-// String converts a directory type to it's string representation.
-func (d DirType) String() string {
-	if d < Cache || d > Temp {
-		return ""
+// Temp retrieves the current temp directory. It returns an empty string if the directory is not set. Use Assign() to
+// initialize a new Temp directory.
+func (a *AppDirs) Temp() string {
+	if a.temp != nil {
+		return a.temp.Path
 	}
-	return [...]string{"cache", "config", "home", "workspace", "temp"}[d]
+	return ""
 }
 
-// AbsPath returns the absolute path for a given base path and path. If path is relative it is joined with the base
-// path, otherwise the path itself is returned. AbsPath calls filepath.Clean on the result. The special character "~"
-// is expanded to the user's home directory (if set as prefix).
-func AbsPath(base string, path string) string {
-	if strings.HasPrefix(path, "~") {
-		dir, e := os.UserHomeDir()
-		if e != nil {
-			dir = "~"
-		}
-		path = strings.Replace(path, "~", dir, 1)
+// Workspace retrieves the current workspace directory. It returns an empty string if the
+// directory is not set. Use Assign() to initialize a new Workspace directory.
+func (a *AppDirs) Workspace() string {
+	if a.workspace != nil {
+		return a.workspace.Path
 	}
-
-	if filepath.IsAbs(path) {
-		return filepath.Clean(path)
-	}
-
-	return filepath.Clean(filepath.Join(base, path))
-}
-
-// Root returns the working directory of the repository or the running command. In debugging mode, the current working
-// directory may actually be a sub directory, such as 'src' or 'cmd'. In these cases, the workspace root is set to the
-// nearest parent directory containing a ".git" repository. When running a compiled binary, the function returns the
-// current working directory.
-func Root(appName string) (path string, err error) {
-	_, cmd := filepath.Split(os.Args[0])
-	dir, e := os.Getwd()
-	if e != nil {
-		return "", e
-	}
-
-	// return the current working directory when running a compiled binary
-	if cmd == appName {
-		return dir, nil
-	}
-
-	// traverse the current path for a workspace marker in reverse order
-	isRoot := false
-	for {
-		// return the current path if it contains a ".git" directory
-		s, err := os.Stat(filepath.Join(dir, ".git"))
-		if err == nil && s.IsDir() {
-			return dir, nil
-		}
-
-		// stop when at the root of the path
-		if isRoot {
-			return "", errors.New("cannot identify workspace root (no .git repository found)")
-		}
-
-		// TODO: test Windows compatibility
-		// traverse one level up the path hierarchy
-		dir = filepath.Dir(dir)
-		if dir == filepath.VolumeName(dir)+string(os.PathSeparator) || dir == string(os.PathSeparator) {
-			isRoot = true
-		}
-	}
+	return ""
 }
 
 //======================================================================================================================
