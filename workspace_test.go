@@ -8,7 +8,6 @@ package workspace
 //======================================================================================================================
 
 import (
-	_ "embed"
 	"os"
 	"path/filepath"
 	"testing"
@@ -100,11 +99,6 @@ func TestWorkspace(t *testing.T) {
 func TestNewAppDirs(t *testing.T) {
 	_, err := NewAppDirs(appName)
 	require.Nil(t, err, "Unexpected result when initializing app directories")
-}
-
-func TestNewDir(t *testing.T) {
-	_, err := NewDir(Cache, "", []string{}, appName)
-	require.Nil(t, err, "Unexpected result when initializing app directory")
 }
 
 func TestMakeAbsolute(t *testing.T) {
