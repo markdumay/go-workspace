@@ -93,7 +93,7 @@ func TestAssign(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		d, e := NewDir(test.DirType, test.Path, test.Aliases, test.AppName)
+		d, e := NewDir(test.DirType, test.AppName, WithPath(test.Path), WithAliases(test.Aliases))
 		require.Nil(t, e)
 		dirs.Assign(*d)
 
@@ -272,7 +272,8 @@ func TestRemoveTemp(t *testing.T) {
 	}
 
 	for _, curr := range tests {
-		d, e := NewDir(Temp, curr.input, []string{}, appName)
+		// d, e := NewDir(Temp, curr.input, []string{}, appName)
+		d, e := NewDir(Temp, appName, WithPath(curr.input))
 		require.Nil(t, e, "Unexpected result when initializing custom temp directory")
 		dirs.Assign(*d)
 

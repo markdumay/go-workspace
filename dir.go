@@ -56,16 +56,56 @@ const (
 //======================================================================================================================
 
 //======================================================================================================================
+// region Private Variables
+//======================================================================================================================
+
+var (
+	defaultCache     = []string{"$CACHE", "${CACHE}"}
+	defaultConfig    = []string{}
+	defaultHome      = []string{"$HOME", "${HOME}"}
+	defaultTemp      = []string{"$TEMP", "${TEMP}", "$TMP", "${TMP}", "$TMPDIR", "${TMPDIR}", "$TEMPDIR", "${TEMPDIR}"}
+	defaultWorkspace = []string{"$workspaceRoot", "${workspaceRoot}", "$PWD", "${PWD}"}
+)
+
+//======================================================================================================================
+// endregion
+//======================================================================================================================
+
+//======================================================================================================================
+// region Private Types
+//======================================================================================================================
+
+// aliasesOption associates specific aliases for initialization of a new application directory.
+type aliasesOption struct {
+	Aliases []string
+}
+
+// pathOption associates a specific path for initialization of a new application directory.
+type pathOption struct {
+	Path string
+}
+
+// options defines the optional arguments when creating a new application directory.
+type options struct {
+	path    string
+	aliases []string
+}
+
+//======================================================================================================================
+// endregion
+//======================================================================================================================
+
+//======================================================================================================================
 // region Public Types
 //======================================================================================================================
 
 // Dir holds a reference to a specific application directory and it's aliases (keywords).
 type Dir struct {
-	// DirType indicates the type of directory, either Cache, Config, Home, Workspace, or Temp.
-	DirType DirType
+	// dirType indicates the type of directory, either Cache, Config, Home, Workspace, or Temp.
+	dirType DirType
 
-	// Path is the absolute associated with the directory.
-	Path string
+	// path is the absolute path associated with the directory.
+	path string
 
 	// aliases holds a collection of the keywords associated with a directory.
 	aliases []string
@@ -74,6 +114,11 @@ type Dir struct {
 // DirType defines the type of directory to be configured.
 type DirType int
 
+// Option defines an optional argument for creating new application directory.
+type Option interface {
+	apply(*options)
+}
+
 //======================================================================================================================
 // endregion
 //======================================================================================================================
@@ -81,6 +126,16 @@ type DirType int
 //======================================================================================================================
 // region Private Functions
 //======================================================================================================================
+
+// apply associates an optional path for initialization of a new application directory.
+func (o aliasesOption) apply(opts *options) {
+	opts.aliases = o.Aliases
+}
+
+// apply associates an optional path for initialization of a new application directory.
+func (o pathOption) apply(opts *options) {
+	opts.path = o.Path
+}
 
 // exists validates if a specific item exists within an array.
 func exists(arr []string, item string) bool {
@@ -100,44 +155,71 @@ func exists(arr []string, item string) bool {
 // region Public Functions
 //======================================================================================================================
 
-// NewDir creates a new Dir instance for the provided arguments. A default path is set when the provided path is empty.
-// The input path should be an absolute path otherwise.
-func NewDir(dirType DirType, path string, aliases []string, appName string) (dir *Dir, err error) {
-	var d Dir
+// NewDir creates a new Dir instance for the provided arguments. NewDir supports two optional parameters, set by
+// WithAliases and WithPath respectively. WithAliases associates specific aliases with the application directory.
+// WithPath initializes the application directory for a specific path. If omitted, both parameters revert to a default
+// value pending the dir type.
+func NewDir(dirType DirType, appName string, opts ...Option) (dir *Dir, err error) {
+	// init the options
+	options := options{}
+	options.aliases = make([]string, 0)
+	for _, o := range opts {
+		o.apply(&options)
+	}
 
-	d.DirType = dirType
-	d.aliases = make([]string, len(aliases))
-	copy(d.aliases, aliases)
-
-	if path != "" {
-		if !filepath.IsAbs(path) {
-			return nil, fmt.Errorf("cannot process relative path: %s", path)
+	// init the path
+	if options.path != "" {
+		if !filepath.IsAbs(options.path) {
+			return nil, fmt.Errorf("cannot process relative path: %s", options.path)
 		}
-		d.Path = path
 	} else {
 		switch dirType {
 		case Cache:
-			d.Path, err = os.UserCacheDir()
-			d.Path = filepath.Join(d.Path, appName)
+			options.path, err = os.UserCacheDir()
+			options.path = filepath.Join(options.path, appName)
 
 		case Config, Workspace:
-			d.Path, err = Root(appName)
+			options.path, err = Root(appName)
 
 		case Home:
-			d.Path, err = os.UserHomeDir()
+			options.path, err = os.UserHomeDir()
 
 		case Temp:
-			d.Path = filepath.Join(os.TempDir(), appName)
+			options.path = filepath.Join(os.TempDir(), appName)
 		}
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot initialize directory: %s", dirType.String())
 	}
 
-	d.Path = filepath.Clean(d.Path)
+	// init the aliases
+	if len(options.aliases) == 0 {
+		switch dirType {
+		case Cache:
+			options.aliases = defaultCache
 
-	return &d, err
+		case Config:
+			options.aliases = defaultConfig
+
+		case Workspace:
+			options.aliases = defaultWorkspace
+
+		case Home:
+			options.aliases = defaultHome
+
+		case Temp:
+			options.aliases = defaultTemp
+		}
+	}
+
+	// create a new Dir and return the value
+	dir = &Dir{
+		dirType: dirType,
+		path:    filepath.Clean(options.path),
+		aliases: options.aliases,
+	}
+
+	return
 }
 
 // Aliases retrieves a collection of the aliases (keywords) associated with a directory.
@@ -158,6 +240,16 @@ func (d *Dir) AppendAliases(aliases ...string) {
 
 	// sort the aliases alphabetically
 	sort.Strings(d.aliases)
+}
+
+// DirType retrieves the type of configured directory, either Cache, Config, Home, Workspace, or Temp.
+func (d *Dir) DirType() DirType {
+	return d.dirType
+}
+
+// Path retrieves the absolute path associated with the directory.
+func (d *Dir) Path() string {
+	return d.path
 }
 
 // RemoveAliases removes one or more aliases from the collection of aliases. Unrecognized aliases are ignored.
@@ -236,6 +328,16 @@ func Root(appName string) (path string, err error) {
 			isRoot = true
 		}
 	}
+}
+
+// WithAliases associates optional aliases to be used by the application directory. A default value is used if omitted.
+func WithAliases(aliases []string) Option {
+	return aliasesOption{Aliases: aliases}
+}
+
+// WithPath associates an optional path to be used by the application directory. A default value is used if omitted.
+func WithPath(path string) Option {
+	return pathOption{Path: path}
 }
 
 //======================================================================================================================

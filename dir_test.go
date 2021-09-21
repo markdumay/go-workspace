@@ -32,21 +32,21 @@ func TestExists(t *testing.T) {
 }
 
 func TestNewDir(t *testing.T) {
-	_, e := NewDir(Cache, "", []string{}, appName)
+	_, e := NewDir(Cache, appName)
 	require.Nil(t, e, "Unexpected result when initializing app directory")
 
-	_, e = NewDir(Cache, "test", []string{}, appName)
+	_, e = NewDir(Cache, appName, WithPath("test"))
 	assert.EqualError(t, e, "cannot process relative path: test")
 
 }
 
 func TestAliases(t *testing.T) {
-	d, e := NewDir(Cache, "", []string{}, appName)
+	arr := []string{"a", "b", "c"}
+	d, e := NewDir(Cache, appName, WithAliases(arr))
 	require.Nil(t, e, "Unexpected result when initializing app directory")
 
-	arr := []string{"a", "b", "c"}
-	d.AppendAliases(arr...)
-	assert.Equal(t, arr, d.Aliases())
+	d.AppendAliases("d")
+	assert.Equal(t, []string{"a", "b", "c", "d"}, d.Aliases())
 
 	d.RemoveAliases("a", "b", "c", "d")
 	assert.Len(t, d.Aliases(), 0)

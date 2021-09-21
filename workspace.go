@@ -21,22 +21,6 @@ import (
 //======================================================================================================================
 
 //======================================================================================================================
-// region Private Variables
-//======================================================================================================================
-
-var (
-	defaultCache     = []string{"$CACHE", "${CACHE}"}
-	defaultConfig    = []string{}
-	defaultHome      = []string{"$HOME", "${HOME}"}
-	defaultTemp      = []string{"$TEMP", "${TEMP}", "$TMP", "${TMP}", "$TMPDIR", "${TMPDIR}", "$TEMPDIR", "${TEMPDIR}"}
-	defaultWorkspace = []string{"$workspaceRoot", "${workspaceRoot}", "$PWD", "${PWD}"}
-)
-
-//======================================================================================================================
-// endregion
-//======================================================================================================================
-
-//======================================================================================================================
 // region Public Types
 //======================================================================================================================
 
@@ -90,9 +74,9 @@ func (a *AppDirs) initKeywords() {
 
 	for _, d := range dirs {
 		for i, alias := range d.Aliases() {
-			a.keywords[alias] = d.Path
+			a.keywords[alias] = d.Path()
 			if i == 0 {
-				a.keywordsReverse[d.Path] = alias
+				a.keywordsReverse[d.Path()] = alias
 			}
 		}
 	}
@@ -114,31 +98,31 @@ func (a *AppDirs) initKeywords() {
 func NewAppDirs(appName string) (dirs *AppDirs, err error) {
 	var d AppDirs
 
-	cache, e := NewDir(Cache, "", defaultCache, appName)
+	cache, e := NewDir(Cache, appName)
 	if e != nil {
 		return nil, e
 	}
 	d.cache = cache
 
-	config, e := NewDir(Config, "", defaultConfig, appName)
+	config, e := NewDir(Config, appName)
 	if e != nil {
 		return nil, e
 	}
 	d.config = config
 
-	home, e := NewDir(Home, "", defaultHome, appName)
+	home, e := NewDir(Home, appName)
 	if e != nil {
 		return nil, e
 	}
 	d.home = home
 
-	temp, e := NewDir(Temp, "", defaultTemp, appName)
+	temp, e := NewDir(Temp, appName)
 	if e != nil {
 		return nil, e
 	}
 	d.temp = temp
 
-	workspace, e := NewDir(Workspace, "", defaultWorkspace, appName)
+	workspace, e := NewDir(Workspace, appName)
 	if e != nil {
 		return nil, e
 	}
@@ -155,7 +139,7 @@ func NewAppDirs(appName string) (dirs *AppDirs, err error) {
 // duplicate keywords.
 func (a *AppDirs) Assign(d Dir) {
 	var updated bool
-	switch d.DirType {
+	switch d.DirType() {
 	case Cache:
 		updated = a.cache != nil
 		if len(d.Aliases()) == 0 {
@@ -205,9 +189,9 @@ func (a *AppDirs) Assign(d Dir) {
 		}
 
 		for i, alias := range d.Aliases() {
-			a.keywords[alias] = d.Path
+			a.keywords[alias] = d.Path()
 			if i == 0 {
-				a.keywordsReverse[d.Path] = alias // use the first alias for a reverse substitution
+				a.keywordsReverse[d.Path()] = alias // use the first alias for a reverse substitution
 			}
 		}
 	}
@@ -217,7 +201,7 @@ func (a *AppDirs) Assign(d Dir) {
 // initialize a new Cache directory.
 func (a *AppDirs) Cache() string {
 	if a.cache != nil {
-		return a.cache.Path
+		return a.cache.Path()
 	}
 	return ""
 }
@@ -226,7 +210,7 @@ func (a *AppDirs) Cache() string {
 // to initialize a new Config directory.
 func (a *AppDirs) Config() string {
 	if a.cache != nil {
-		return a.config.Path
+		return a.config.Path()
 	}
 	return ""
 }
@@ -262,7 +246,7 @@ func (a *AppDirs) CreateTemp() (err error) {
 // initialize a new Home directory.
 func (a *AppDirs) Home() string {
 	if a.home != nil {
-		return a.home.Path
+		return a.home.Path()
 	}
 	return ""
 }
@@ -348,7 +332,7 @@ func (a *AppDirs) RecreateTemp(subdir string) (err error) {
 	}
 
 	// create the temp dir
-	path := filepath.Join(a.temp.Path, subdir)
+	path := filepath.Join(a.temp.Path(), subdir)
 	if e := os.Mkdir(path, 0755); e != nil {
 		return fmt.Errorf("cannot create temp directory: %s", path)
 	}
@@ -363,11 +347,11 @@ func (a *AppDirs) RecreateTemp(subdir string) (err error) {
 func (a *AppDirs) RemoveTemp(subdir string) (err error) {
 
 	// validate the configured temp directory is valid and safe
-	if a.temp.Path == "" {
+	if a.temp.Path() == "" {
 		return fmt.Errorf("temp directory is not configured correctly")
 	}
 	tmp := filepath.Clean(os.TempDir())
-	current := filepath.Join(a.temp.Path, subdir)
+	current := filepath.Join(a.temp.Path(), subdir)
 
 	if !strings.HasPrefix(current, tmp) {
 		return fmt.Errorf("temp directory is considered unsafe")
@@ -389,7 +373,7 @@ func (a *AppDirs) RemoveTemp(subdir string) (err error) {
 // initialize a new Temp directory.
 func (a *AppDirs) Temp() string {
 	if a.temp != nil {
-		return a.temp.Path
+		return a.temp.Path()
 	}
 	return ""
 }
@@ -398,7 +382,7 @@ func (a *AppDirs) Temp() string {
 // directory is not set. Use Assign() to initialize a new Workspace directory.
 func (a *AppDirs) Workspace() string {
 	if a.workspace != nil {
-		return a.workspace.Path
+		return a.workspace.Path()
 	}
 	return ""
 }
