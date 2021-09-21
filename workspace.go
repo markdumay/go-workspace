@@ -142,37 +142,22 @@ func (a *AppDirs) Assign(d Dir) {
 	switch d.DirType() {
 	case Cache:
 		updated = a.cache != nil
-		if len(d.Aliases()) == 0 {
-			d.AppendAliases(defaultCache...)
-		}
 		a.cache = &d
 
 	case Config:
 		updated = a.config != nil
-		if len(d.Aliases()) == 0 {
-			d.AppendAliases(defaultConfig...)
-		}
 		a.config = &d
 
 	case Home:
 		updated = a.home != nil
-		if len(d.Aliases()) == 0 {
-			d.AppendAliases(defaultHome...)
-		}
 		a.home = &d
 
 	case Temp:
 		updated = a.temp != nil
-		if len(d.Aliases()) == 0 {
-			d.AppendAliases(defaultTemp...)
-		}
 		a.temp = &d
 
 	case Workspace:
 		updated = a.workspace != nil
-		if len(d.Aliases()) == 0 {
-			d.AppendAliases(defaultWorkspace...)
-		}
 		a.workspace = &d
 	}
 
