@@ -177,7 +177,7 @@ func (d DirType) String() string {
 	if d < Cache || d > Temp {
 		return ""
 	}
-	return [...]string{"cache", "config", "home", "workspace", "temp"}[d]
+	return [...]string{"cache", "config", "home", "workspace", "temp"}[d-1]
 }
 
 // AbsPath returns the absolute path for a given base path and path. If path is relative it is joined with the base
