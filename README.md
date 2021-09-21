@@ -2,7 +2,7 @@
 
 <!-- Tagline -->
 <p align="center">
-    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders</b>
+    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders for an application</b>
     <br />
 </p>
 
