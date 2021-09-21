@@ -44,7 +44,7 @@
 
 
 ## About
-go-workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the substitution of configurable keywords, such as `$CACHE`, `$HOME`, `$workspaceRoot`, and `$TEMP`. Finally, go-workspace sets the workspace folder to the correct path when ran from source.
+go-workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders for an application. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the substitution of configurable keywords, such as `$CACHE`, `$HOME`, `$workspaceRoot`, and `$TEMP`. Finally, go-workspace sets the workspace folder to the correct path when ran from source.
 
 
 ## Built With
