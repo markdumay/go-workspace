@@ -241,13 +241,13 @@ func (a *AppDirs) CreateTemp() (err error) {
 		return fmt.Errorf("cannot create temp directory, invalid state")
 	}
 
-	// check if the path already exists, return an error if it's a file
+	// check if the path already exists, return an error if it's a file or invalid path
 	info, e := os.Stat(path)
 	if e == nil {
 		if info.IsDir() {
 			return nil
 		}
-		return fmt.Errorf("cannot create temp directory, duplicate name: '%s'", path)
+		return fmt.Errorf("cannot create temp directory: '%s'", path)
 	}
 
 	// create the temp directory
