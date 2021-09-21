@@ -9,7 +9,7 @@ on:
 defaults:
   run:
     working-directory: .
-    
+
 jobs:
   test:
     runs-on: ubuntu-20.04
