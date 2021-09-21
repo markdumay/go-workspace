@@ -35,24 +35,72 @@ const appName = "Test"
 //======================================================================================================================
 
 func TestAssign(t *testing.T) {
-	dirs := AppDirs{}
-	path, e := Root(appName)
-	require.Nil(t, e, "Unexpected result when initializing workspace directory")
-
-	// test a default assign
-	d, e := NewDir(Workspace, "", []string{}, appName)
-	require.Nil(t, e, "Unexpected result when initializing default workspace directory")
-	dirs.Assign(*d)
-	for _, keyword := range defaultWorkspace {
-		assert.Equal(t, path, dirs.keywords[keyword])
+	type test struct {
+		DirType  DirType
+		Path     string
+		Aliases  []string
+		AppName  string
+		Expected []string
 	}
 
-	// test a custom assign
-	d, e = NewDir(Workspace, path, []string{"$CUSTOM_DIR"}, appName)
-	require.Nil(t, e, "Unexpected result when initializing custom workspace directory")
-	dirs.Assign(*d)
-	assert.Len(t, dirs.keywords, 1)
-	assert.Equal(t, path, dirs.keywords["$CUSTOM_DIR"])
+	dirs := AppDirs{}
+	path, e := Root(appName)
+	require.Nil(t, e)
+
+	tests := []test{
+		{
+			DirType:  Cache,
+			Path:     path,
+			Aliases:  []string{},
+			AppName:  appName,
+			Expected: defaultCache,
+		},
+		{
+			DirType:  Config,
+			Path:     path,
+			Aliases:  []string{},
+			AppName:  appName,
+			Expected: defaultConfig,
+		},
+		{
+			DirType:  Home,
+			Path:     path,
+			Aliases:  []string{},
+			AppName:  appName,
+			Expected: defaultHome,
+		},
+		{
+			DirType:  Workspace,
+			Path:     path,
+			Aliases:  []string{},
+			AppName:  appName,
+			Expected: defaultWorkspace,
+		},
+		{
+			DirType:  Temp,
+			Path:     path,
+			Aliases:  []string{},
+			AppName:  appName,
+			Expected: defaultTemp,
+		},
+		{
+			DirType:  Workspace,
+			Path:     path,
+			Aliases:  []string{"$CUSTOM_DIR"},
+			AppName:  appName,
+			Expected: []string{"$CUSTOM_DIR"},
+		},
+	}
+
+	for _, test := range tests {
+		d, e := NewDir(test.DirType, test.Path, test.Aliases, test.AppName)
+		require.Nil(t, e)
+		dirs.Assign(*d)
+
+		for _, keyword := range test.Expected {
+			assert.Equal(t, path, dirs.keywords[keyword])
+		}
+	}
 }
 
 func TestCache(t *testing.T) {
@@ -62,6 +110,9 @@ func TestCache(t *testing.T) {
 	expectedCache, _ := os.UserCacheDir()
 	expectedCache = filepath.Join(expectedCache, appName)
 	assert.Equal(t, expectedCache, dirs.Cache())
+
+	dirs = &AppDirs{}
+	assert.Equal(t, "", dirs.Cache())
 }
 
 func TestConfig(t *testing.T) {
@@ -70,6 +121,9 @@ func TestConfig(t *testing.T) {
 
 	expectedConfig, _ := Root(appName)
 	assert.Equal(t, expectedConfig, dirs.Config())
+
+	dirs = &AppDirs{}
+	assert.Equal(t, "", dirs.Config())
 }
 
 func TestHome(t *testing.T) {
@@ -78,6 +132,9 @@ func TestHome(t *testing.T) {
 
 	expectedHome, _ := os.UserHomeDir()
 	assert.Equal(t, expectedHome, dirs.Home())
+
+	dirs = &AppDirs{}
+	assert.Equal(t, "", dirs.Home())
 }
 
 func TestTemp(t *testing.T) {
@@ -86,6 +143,9 @@ func TestTemp(t *testing.T) {
 
 	expectedTemp := filepath.Join(os.TempDir(), appName)
 	assert.Equal(t, expectedTemp, dirs.Temp())
+
+	dirs = &AppDirs{}
+	assert.Equal(t, "", dirs.Temp())
 }
 
 func TestWorkspace(t *testing.T) {
@@ -94,6 +154,9 @@ func TestWorkspace(t *testing.T) {
 
 	expectedWorkspace, _ := Root(appName)
 	assert.Equal(t, expectedWorkspace, dirs.Workspace())
+
+	dirs = &AppDirs{}
+	assert.Equal(t, "", dirs.Workspace())
 }
 
 func TestNewAppDirs(t *testing.T) {
@@ -169,6 +232,20 @@ func TestParameterize(t *testing.T) {
 	}
 }
 
+func TestCreateTemp(t *testing.T) {
+	dirs := &AppDirs{}
+
+	// test invalid state
+	e := dirs.CreateTemp()
+	assert.EqualError(t, e, "cannot create temp directory, invalid state")
+
+	// test default behavior
+	dirs, e = NewAppDirs(appName)
+	require.Nil(t, e)
+	e = dirs.CreateTemp()
+	require.Nil(t, e)
+}
+
 func TestRecreateTemp(t *testing.T) {
 	dirs, err := NewAppDirs(appName)
 	require.Nil(t, err, "Unexpected result when initializing app directories")
@@ -205,6 +282,41 @@ func TestRemoveTemp(t *testing.T) {
 		}
 		assert.Equal(t, curr.expected, got)
 	}
+}
+
+func TestMakeRelative(t *testing.T) {
+	dirs, e := NewAppDirs(appName)
+	require.Nil(t, e)
+
+	type test struct {
+		BasePath string
+		Input    string
+		Expected string
+	}
+
+	tests := []test{
+		{
+			BasePath: "",
+			Input:    "",
+			Expected: ".",
+		},
+		{
+			BasePath: "/",
+			Input:    "/test",
+			Expected: "test",
+		},
+		{
+			BasePath: "/x",
+			Input:    "/test",
+			Expected: "../test",
+		},
+	}
+
+	for _, test := range tests {
+		got := dirs.MakeRelative(test.BasePath, test.Input)
+		assert.Equal(t, test.Expected, got)
+	}
+
 }
 
 //======================================================================================================================
