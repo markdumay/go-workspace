@@ -2,7 +2,7 @@
 
 <!-- Tagline -->
 <p align="center">
-    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders</b>
+    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders for an application</b>
     <br />
 </p>
 
@@ -44,7 +44,7 @@
 
 
 ## About
-go-workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the substitution of configurable keywords, such as `$CACHE`, `$HOME`, `$workspaceRoot`, and `$TEMP`. Finally, go-workspace sets the workspace folder to the correct path when ran from source.
+go-workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders for an application. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the substitution of configurable keywords, such as `$CACHE`, `$HOME`, `$workspaceRoot`, and `$TEMP`. Finally, go-workspace sets the workspace folder to the correct path when ran from source.
 
 
 ## Built With
@@ -67,16 +67,6 @@ Import go-workspace into your application to start using the package. The follow
 
 <!-- TODO: add example -->
 ```go
-package main
-
-import (
-	"fmt"
-	"os"
-
-    "go.markdumay.org/workspace"
-)
-
-func main() {
 	const appName = "my_app"
 
 	// initialize the application directories
@@ -96,14 +86,13 @@ func main() {
 
 	// show the path of a custom keyword, expected output (macOS):
 	// $MYDIR
-	w, e := NewDir(Workspace, "/mydir", []string{"$MYDIR"}, appName)
+	w, e := NewDir(Workspace, appName, WithPath("/mydir"), WithAliases([]string{"$MYDIR"}))
 	if e != nil {
 		fmt.Println("ERROR: cannot initialize workspace directory")
 		os.Exit(1)
 	}
 	dirs.Assign(*w)
 	fmt.Println(dirs.Parameterize(dirs.Workspace(), "/mydir"))
-}
 ```
 
 ### Supported Folders
