@@ -28,7 +28,7 @@
         <img src="https://img.shields.io/github/issues-pr-raw/markdumay/go-workspace.svg" />
     </a>
     <a href="https://github.com/markdumay/go-workspace/blob/main/LICENSE" alt="License">
-        <img src="https://img.shields.io/github/license/markdumay/go-workspace" />
+        <img src="https://img.shields.io/badge/license-MIT-green" />
     </a>
 </p>
 
