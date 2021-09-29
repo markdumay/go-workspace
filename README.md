@@ -12,6 +12,9 @@
     <a href="https://pkg.go.dev/go.markdumay.org/workspace" alt="Go Package">
         <img src="https://pkg.go.dev/badge/go.markdumay.org/workspace.svg" alt="Go Reference" />
     </a>
+    <a href="https://github.com/markdumay/go-workspace/releases/latest" alt="Go Module">
+        <img src="https://img.shields.io/github/v/tag/markdumay/go-workspace?label=module" alt="Go Module" />
+    </a>
     <a href="https://www.codefactor.io/repository/github/markdumay/go-workspace" alt="CodeFactor">
         <img src="https://img.shields.io/codefactor/grade/github/markdumay/go-workspace" />
     </a>
