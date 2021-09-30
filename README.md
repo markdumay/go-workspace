@@ -2,7 +2,7 @@
 
 <!-- Tagline -->
 <p align="center">
-    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders for an application</b>
+    <b>Simplify the platform-aware access to the Cache, Config, Home, Workspace, and Temp folders for a Go application</b>
     <br />
 </p>
 
