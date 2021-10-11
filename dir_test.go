@@ -8,8 +8,10 @@ package workspace
 //======================================================================================================================
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -82,10 +84,18 @@ func TestAbsPath(t *testing.T) {
 	home, e := os.UserHomeDir()
 	require.Nil(t, e)
 
-	tests := []test{
-		{BasePath: "", Path: "~", Expected: home},
-		{BasePath: home, Path: "test", Expected: filepath.Join(home, "test")},
-		{BasePath: home, Path: "/test", Expected: "/test"},
+	var tests []test
+	if runtime.GOOS != "windows" {
+		tests = []test{
+			{BasePath: "", Path: "~", Expected: home},
+			{BasePath: home, Path: "test", Expected: filepath.Join(home, "test")},
+			{BasePath: home, Path: fmt.Sprintf("%c%s", filepath.Separator, "test"), Expected: fmt.Sprintf("%c%s", filepath.Separator, "test")},
+		}
+	} else {
+		tests = []test{
+			{BasePath: home, Path: "test", Expected: filepath.Join(home, "test")},
+			{BasePath: home, Path: fmt.Sprintf("c:%c%s", filepath.Separator, "test"), Expected: fmt.Sprintf("c:%c%s", filepath.Separator, "test")},
+		}
 	}
 
 	for _, test := range tests {

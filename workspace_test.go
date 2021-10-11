@@ -8,8 +8,10 @@ package workspace
 //======================================================================================================================
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,29 +175,34 @@ func TestMakeAbsolute(t *testing.T) {
 		expected string
 	}
 
-	var tests = [...]test{
+	var tests = []test{
 		{input: "test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "/test", expected: "/test"},
-		{input: "./test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "~/test", expected: filepath.Join(dirs.Home(), "test")}, //TODO: not on Windows
-		{input: "test/../test/", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "$CACHE/test", expected: filepath.Join(dirs.Cache(), "test")},
-		{input: "${CACHE}/test", expected: filepath.Join(dirs.Cache(), "test")},
-		{input: "$HOME/test", expected: filepath.Join(dirs.Home(), "test")},
-		{input: "${HOME}/test", expected: filepath.Join(dirs.Home(), "test")},
-		{input: "$TEMP/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "${TEMP}/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "$TMP/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "${TMP}/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "$TMPDIR/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "${TMPDIR}/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "$TEMPDIR/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "${TEMPDIR}/test", expected: filepath.Join(dirs.Temp(), "test")},
-		{input: "$workspaceRoot/test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "${workspaceRoot}/test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "$PWD/test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "${PWD}/test", expected: filepath.Join(dirs.Workspace(), "test")},
-		{input: "$TEMPtest", expected: filepath.Join(dirs.Workspace(), "$TEMPtest")},
+		{input: filepath.Join("", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("test", "..", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("$CACHE", "test"), expected: filepath.Join(dirs.Cache(), "test")},
+		{input: filepath.Join("${CACHE}", "test"), expected: filepath.Join(dirs.Cache(), "test")},
+		{input: filepath.Join("$HOME", "test"), expected: filepath.Join(dirs.Home(), "test")},
+		{input: filepath.Join("${HOME}", "test"), expected: filepath.Join(dirs.Home(), "test")},
+		{input: filepath.Join("$TEMP", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("${TEMP}", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("$TMP", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("${TMP}", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("$TMPDIR", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("${TMPDIR}", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("$TEMPDIR", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("${TEMPDIR}", "test"), expected: filepath.Join(dirs.Temp(), "test")},
+		{input: filepath.Join("$workspaceRoot", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("${workspaceRoot}", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("$PWD", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("${PWD}", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
+		{input: filepath.Join("$TEMPtest"), expected: filepath.Join(dirs.Workspace(), "$TEMPtest")},
+	}
+
+	if runtime.GOOS != "windows" {
+		tests = append(tests, test{input: "/test", expected: "/test"})
+		tests = append(tests, test{input: "~/test", expected: filepath.Join(dirs.Home(), "test")})
+	} else {
+		tests = append(tests, test{input: fmt.Sprintf("c:%c%s", filepath.Separator, "test"), expected: fmt.Sprintf("c:%c%s", filepath.Separator, "test")})
 	}
 
 	for _, curr := range tests {
@@ -213,17 +220,22 @@ func TestParameterize(t *testing.T) {
 		expected string
 	}
 
-	var tests = [...]test{
-		{input: filepath.Join(dirs.Workspace(), "test"), expected: "$workspaceRoot/test"},
+	var tests = []test{
+		{input: filepath.Join(dirs.Workspace(), "test"), expected: filepath.Join("$workspaceRoot", "test")},
 		{input: "test", expected: "test"},
-		{input: "/test", expected: "/test"},
-		{input: "/test/", expected: "/test"},
-		{input: filepath.Join(dirs.Workspace(), "test/../test/"), expected: "$workspaceRoot/test"},
+		{input: filepath.Join(dirs.Workspace(), "test", "..", "test"), expected: filepath.Join("$workspaceRoot", "test")},
 		{input: "$TEMPtest", expected: "$TEMPtest"},
-		{input: filepath.Join(dirs.Cache(), "test"), expected: "$CACHE/test"},
-		{input: filepath.Join(dirs.Home(), "test"), expected: "$HOME/test"},
-		{input: filepath.Join(dirs.Temp(), "test"), expected: "$TEMP/test"},
-		{input: filepath.Join(dirs.Workspace(), "test"), expected: "$workspaceRoot/test"},
+		{input: filepath.Join(dirs.Cache(), "test"), expected: filepath.Join("$CACHE", "test")},
+		{input: filepath.Join(dirs.Home(), "test"), expected: filepath.Join("$HOME", "test")},
+		{input: filepath.Join(dirs.Temp(), "test"), expected: filepath.Join("$TEMP", "test")},
+		{input: filepath.Join(dirs.Workspace(), "test"), expected: filepath.Join("$workspaceRoot", "test")},
+	}
+
+	if runtime.GOOS != "windows" {
+		tests = append(tests, test{input: "/test", expected: "/test"})
+		tests = append(tests, test{input: "/test/", expected: "/test"})
+	} else {
+		tests = append(tests, test{input: fmt.Sprintf("c:%c%s", filepath.Separator, "test"), expected: fmt.Sprintf("c:%c%s", filepath.Separator, "test")})
 	}
 
 	for _, curr := range tests {
@@ -263,16 +275,20 @@ func TestRemoveTemp(t *testing.T) {
 		expected string
 	}
 
-	var tests = [...]test{
+	var tests = []test{
 		{input: filepath.Join(os.TempDir(), appName), expected: ""},
 		{input: "", expected: ""},
-		{input: "/temp", expected: "temp directory is considered unsafe"},
 		{input: os.TempDir(), expected: "expected a subdirectory within the temp directory"},
 		{input: filepath.Join(os.TempDir(), string(os.PathSeparator)), expected: "expected a subdirectory within the temp directory"},
 	}
 
+	if runtime.GOOS != "windows" {
+		tests = append(tests, test{input: "/unsupported", expected: "temp directory is considered unsafe"})
+	} else {
+		tests = append(tests, test{input: fmt.Sprintf("c:%c%s", filepath.Separator, "unsupported"), expected: "temp directory is considered unsafe"})
+	}
+
 	for _, curr := range tests {
-		// d, e := NewDir(Temp, curr.input, []string{}, appName)
 		d, e := NewDir(Temp, appName, WithPath(curr.input))
 		require.Nil(t, e, "Unexpected result when initializing custom temp directory")
 		dirs.Assign(*d)
@@ -295,22 +311,31 @@ func TestMakeRelative(t *testing.T) {
 		Expected string
 	}
 
-	tests := []test{
-		{
-			BasePath: "",
-			Input:    "",
-			Expected: ".",
-		},
-		{
-			BasePath: "/",
-			Input:    "/test",
-			Expected: "test",
-		},
-		{
-			BasePath: "/x",
-			Input:    "/test",
-			Expected: "../test",
-		},
+	var tests []test
+	if runtime.GOOS != "windows" {
+		tests = []test{
+			{
+				BasePath: "", Input: "", Expected: ".",
+			},
+			{
+				BasePath: "/", Input: "/test", Expected: "test",
+			},
+			{
+				BasePath: "/x", Input: "/test", Expected: "../test",
+			},
+		}
+	} else {
+		tests = []test{
+			{
+				BasePath: "", Input: "", Expected: ".",
+			},
+			{
+				BasePath: `c:\`, Input: `c:\\test`, Expected: "test",
+			},
+			{
+				BasePath: `c:\\x`, Input: `c:\\test`, Expected: "..\\test",
+			},
+		}
 	}
 
 	for _, test := range tests {

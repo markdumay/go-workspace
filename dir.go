@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 )
@@ -276,7 +277,7 @@ func (d DirType) String() string {
 // path, otherwise the path itself is returned. AbsPath calls filepath.Clean on the result. The special character "~"
 // is expanded to the user's home directory (if set as prefix).
 func AbsPath(base string, path string) string {
-	if strings.HasPrefix(path, "~") {
+	if runtime.GOOS != "windows" && strings.HasPrefix(path, "~") {
 		dir, e := os.UserHomeDir()
 		if e != nil {
 			dir = "~"
