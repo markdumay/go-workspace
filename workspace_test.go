@@ -175,8 +175,7 @@ func TestMakeAbsolute(t *testing.T) {
 		expected string
 	}
 
-	var tests = make([]test, 0)
-	tests = []test{
+	var tests = []test{
 		{input: "test", expected: filepath.Join(dirs.Workspace(), "test")},
 		{input: filepath.Join("", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
 		{input: filepath.Join("test", "..", "test"), expected: filepath.Join(dirs.Workspace(), "test")},
@@ -221,8 +220,7 @@ func TestParameterize(t *testing.T) {
 		expected string
 	}
 
-	var tests = make([]test, 0)
-	tests = []test{
+	var tests = []test{
 		{input: filepath.Join(dirs.Workspace(), "test"), expected: filepath.Join("$workspaceRoot", "test")},
 		{input: "test", expected: "test"},
 		{input: filepath.Join(dirs.Workspace(), "test", "..", "test"), expected: filepath.Join("$workspaceRoot", "test")},
@@ -277,8 +275,7 @@ func TestRemoveTemp(t *testing.T) {
 		expected string
 	}
 
-	var tests = make([]test, 0)
-	tests = []test{
+	var tests = []test{
 		{input: filepath.Join(os.TempDir(), appName), expected: ""},
 		{input: "", expected: ""},
 		{input: os.TempDir(), expected: "expected a subdirectory within the temp directory"},
@@ -314,8 +311,7 @@ func TestMakeRelative(t *testing.T) {
 		Expected string
 	}
 
-	var tests = make([]test, 0)
-
+	var tests []test
 	if runtime.GOOS != "windows" {
 		tests = []test{
 			{

@@ -84,8 +84,7 @@ func TestAbsPath(t *testing.T) {
 	home, e := os.UserHomeDir()
 	require.Nil(t, e)
 
-	var tests = make([]test, 0)
-
+	var tests []test
 	if runtime.GOOS != "windows" {
 		tests = []test{
 			{BasePath: "", Path: "~", Expected: home},
