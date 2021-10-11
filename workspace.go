@@ -242,11 +242,14 @@ func (a *AppDirs) MakeAbsolute(basePath string, input string) (path string) {
 	segments := strings.Split(input, string(os.PathSeparator))
 	var result string
 
-	for _, segment := range segments {
+	for i, segment := range segments {
 		s := a.keywords[segment]
 		if s != "" {
 			result = filepath.Join(result, s)
 		} else {
+			if runtime.GOOS == "windows" && i == 0 && strings.EqualFold(filepath.VolumeName(segment), segment) {
+				segment = fmt.Sprintf("%s%c", segment, filepath.Separator)
+			}
 			result = filepath.Join(result, segment)
 		}
 	}
