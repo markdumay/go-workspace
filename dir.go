@@ -1,10 +1,10 @@
 // Copyright © 2021 Mark Dumay. All rights reserved.
 // Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 
-// workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders for an
-// application. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the substitution
-// of configurable keywords, such as $CACHE, $HOME, $workspaceRoot, and $TEMP. Finally, go-workspace sets the workspace
-// folder to the correct path when ran from source.
+// Package workspace is a Go package to simplify the access to the Cache, Config, Home, Workspace, and Temp folders for
+// an application. It uses common settings for Unix, macOS, Plan 9, and Windows. In addition, it supports the
+// substitution of configurable keywords, such as $CACHE, $HOME, $workspaceRoot, and $TEMP. Finally, go-workspace sets
+// the workspace folder to the correct path when ran from source.
 package workspace
 
 //======================================================================================================================
